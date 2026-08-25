@@ -1,5 +1,7 @@
 #include "bt_backtracking.hpp"
+
 #include <algorithm>
+#include <chrono>
 
 bool esMinuscula(char c) {
     return c >= 'a' && c <= 'z';
@@ -14,19 +16,49 @@ bool esDigito(char c) {
 }
 
 bool esSimbolo(char c) {
-    return c == '!' || c == '@' || c == '#' || c == '$' || c == '%';
+    return c == '!' ||
+           c == '@' ||
+           c == '#' ||
+           c == '$' ||
+           c == '%';
+}
+
+static void agregarCaracter(EstadoBT& estado, char c) {
+    estado.prefijo.push_back(c);
+
+    if (esMinuscula(c)) {
+        estado.lower++;
+    } else if (esMayuscula(c)) {
+        estado.upper++;
+    } else if (esDigito(c)) {
+        estado.digit++;
+    } else if (esSimbolo(c)) {
+        estado.symbol++;
+    }
+}
+
+static void quitarCaracter(EstadoBT& estado, char c) {
+    if (esMinuscula(c)) {
+        estado.lower--;
+    } else if (esMayuscula(c)) {
+        estado.upper--;
+    } else if (esDigito(c)) {
+        estado.digit--;
+    } else if (esSimbolo(c)) {
+        estado.symbol--;
+    }
+
+    estado.prefijo.pop_back();
 }
 
 bool solucionValida(
     const EstadoBT& estado,
     const Politica& politica
 ) {
-    // Una solución completa debe tener exactamente longitud n.
     if (static_cast<int>(estado.prefijo.size()) != politica.n) {
         return false;
     }
 
-    // Verificar los mínimos exigidos por la política.
     if (estado.lower < politica.minLower) {
         return false;
     }
@@ -43,7 +75,6 @@ bool solucionValida(
         return false;
     }
 
-    // Verificar que no haya dos caracteres iguales consecutivos.
     if (politica.sinRepetidosConsecutivos) {
         for (std::size_t i = 1; i < estado.prefijo.size(); ++i) {
             if (estado.prefijo[i] == estado.prefijo[i - 1]) {
@@ -59,17 +90,16 @@ bool estadoFactible(
     const EstadoBT& estado,
     const Politica& politica
 ) {
-    // Si el prefijo ya supera la longitud permitida,
-    // esta rama no puede producir una solución.
-    if (static_cast<int>(estado.prefijo.size()) > politica.n) {
+    int longitudActual =
+        static_cast<int>(estado.prefijo.size());
+
+    if (longitudActual > politica.n) {
         return false;
     }
 
-    // Número de posiciones disponibles para completar la contraseña.
     int restantes =
-        politica.n - static_cast<int>(estado.prefijo.size());
+        politica.n - longitudActual;
 
-    // Cantidad mínima que todavía falta de cada categoría.
     int faltanLower =
         std::max(0, politica.minLower - estado.lower);
 
@@ -82,19 +112,140 @@ bool estadoFactible(
     int faltanSymbol =
         std::max(0, politica.minSymbol - estado.symbol);
 
-    // Número total de posiciones necesarias para cumplir
-    // todos los mínimos pendientes.
     int faltantes =
         faltanLower +
         faltanUpper +
         faltanDigit +
         faltanSymbol;
 
-    // Si hacen falta más caracteres de los espacios disponibles,
-    // ninguna extensión de este prefijo puede ser válida.
-    if (faltantes > restantes) {
-        return false;
+    return faltantes <= restantes;
+}
+
+void backtrackingConPoda(
+    EstadoBT& estado,
+    const Politica& politica,
+    const std::string& alfabeto,
+    MetricasBT& metricas
+) {
+    metricas.nodosVisitados++;
+
+    if (static_cast<int>(estado.prefijo.size()) == politica.n) {
+        if (solucionValida(estado, politica)) {
+            metricas.soluciones++;
+        }
+
+        return;
     }
 
-    return true;
+    for (char c : alfabeto) {
+        if (
+            politica.sinRepetidosConsecutivos &&
+            !estado.prefijo.empty() &&
+            estado.prefijo.back() == c
+        ) {
+            metricas.nodosPodados++;
+            continue;
+        }
+
+        agregarCaracter(estado, c);
+
+        if (estadoFactible(estado, politica)) {
+            backtrackingConPoda(
+                estado,
+                politica,
+                alfabeto,
+                metricas
+            );
+        } else {
+            metricas.nodosPodados++;
+        }
+
+        quitarCaracter(estado, c);
+    }
+}
+
+void exploracionSinPoda(
+    EstadoBT& estado,
+    const Politica& politica,
+    const std::string& alfabeto,
+    MetricasBT& metricas
+) {
+    metricas.nodosVisitados++;
+
+    if (static_cast<int>(estado.prefijo.size()) == politica.n) {
+        if (solucionValida(estado, politica)) {
+            metricas.soluciones++;
+        }
+
+        return;
+    }
+
+    for (char c : alfabeto) {
+        agregarCaracter(estado, c);
+
+        exploracionSinPoda(
+            estado,
+            politica,
+            alfabeto,
+            metricas
+        );
+
+        quitarCaracter(estado, c);
+    }
+}
+
+MetricasBT ejecutarConPoda(
+    const Politica& politica,
+    const std::string& alfabeto
+) {
+    EstadoBT estado;
+    MetricasBT metricas;
+
+    auto inicio =
+        std::chrono::high_resolution_clock::now();
+
+    backtrackingConPoda(
+        estado,
+        politica,
+        alfabeto,
+        metricas
+    );
+
+    auto fin =
+        std::chrono::high_resolution_clock::now();
+
+    metricas.tiempoMs =
+        std::chrono::duration<double, std::milli>(
+            fin - inicio
+        ).count();
+
+    return metricas;
+}
+
+MetricasBT ejecutarSinPoda(
+    const Politica& politica,
+    const std::string& alfabeto
+) {
+    EstadoBT estado;
+    MetricasBT metricas;
+
+    auto inicio =
+        std::chrono::high_resolution_clock::now();
+
+    exploracionSinPoda(
+        estado,
+        politica,
+        alfabeto,
+        metricas
+    );
+
+    auto fin =
+        std::chrono::high_resolution_clock::now();
+
+    metricas.tiempoMs =
+        std::chrono::duration<double, std::milli>(
+            fin - inicio
+        ).count();
+
+    return metricas;
 }

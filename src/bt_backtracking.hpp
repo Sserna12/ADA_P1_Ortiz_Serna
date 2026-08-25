@@ -1,26 +1,18 @@
 #ifndef BT_BACKTRACKING_HPP
 #define BT_BACKTRACKING_HPP
 
-#include <string>
 #include <cstdint>
+#include <string>
 
 struct Politica {
-    int n;
+    int n = 0;
 
-    int minLower;
-    int minUpper;
-    int minDigit;
-    int minSymbol;
+    int minLower = 0;
+    int minUpper = 0;
+    int minDigit = 0;
+    int minSymbol = 0;
 
-    bool sinRepetidosConsecutivos;
-};
-
-struct MetricasBT {
-    std::uint64_t nodosVisitados = 0;
-    std::uint64_t nodosPodados = 0;
-    std::uint64_t soluciones = 0;
-
-    double tiempoMs = 0.0;
+    bool sinRepetidosConsecutivos = false;
 };
 
 struct EstadoBT {
@@ -32,19 +24,51 @@ struct EstadoBT {
     int symbol = 0;
 };
 
+struct MetricasBT {
+    std::uint64_t nodosVisitados = 0;
+    std::uint64_t nodosPodados = 0;
+    std::uint64_t soluciones = 0;
+
+    double tiempoMs = 0.0;
+};
+
 bool esMinuscula(char c);
 bool esMayuscula(char c);
 bool esDigito(char c);
 bool esSimbolo(char c);
+
+bool solucionValida(
+    const EstadoBT& estado,
+    const Politica& politica
+);
 
 bool estadoFactible(
     const EstadoBT& estado,
     const Politica& politica
 );
 
-bool solucionValida(
-    const EstadoBT& estado,
-    const Politica& politica
+void backtrackingConPoda(
+    EstadoBT& estado,
+    const Politica& politica,
+    const std::string& alfabeto,
+    MetricasBT& metricas
+);
+
+void exploracionSinPoda(
+    EstadoBT& estado,
+    const Politica& politica,
+    const std::string& alfabeto,
+    MetricasBT& metricas
+);
+
+MetricasBT ejecutarConPoda(
+    const Politica& politica,
+    const std::string& alfabeto
+);
+
+MetricasBT ejecutarSinPoda(
+    const Politica& politica,
+    const std::string& alfabeto
 );
 
 #endif

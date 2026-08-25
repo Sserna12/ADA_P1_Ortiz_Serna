@@ -1,0 +1,20 @@
+Instancia: equipo_n6
+Semilla: 1105
+
+Politica:
+n = 6
+minLower = 3
+minUpper = 2
+minDigit = 2
+minSymbol = 1
+sin repetidos consecutivos = true
+
+Resultado con poda:
+nodos visitados = 1
+nodos podados = 67
+soluciones = 0
+tiempo = 0.002 ms
+
+Observacion:
+La suma de requisitos minimos es 8 y n = 6, por lo que la instancia es infactible.
+La poda detecta la imposibilidad antes de explorar niveles completos del arbol.

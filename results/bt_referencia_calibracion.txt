@@ -1,0 +1,56 @@
+Instancia: referencia
+Modulo: Backtracking
+Alfabeto utilizado: 67 caracteres
+Politica:
+n = 6
+minLower = 2
+minUpper = 1
+minDigit = 1
+minSymbol = 1
+sin repetidos consecutivos = true
+
+IMPORTANTE:
+Las siguientes ejecuciones fueron interrumpidas por limite de nodos.
+Por lo tanto, las soluciones reportadas son parciales y NO representan
+el numero total de soluciones de la instancia.
+
+Ejecucion 1
+Limite de nodos: 100000
+Nodos visitados: 100000
+Nodos podados: 615726
+Soluciones encontradas: 89314
+Tiempo: 12.447 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Ejecucion 2
+Limite de nodos: 1000000
+Nodos visitados: 1000000
+Nodos podados: 5158188
+Soluciones encontradas: 908084
+Tiempo: 68.244 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Ejecucion 3
+Limite de nodos: 10000000
+Nodos visitados: 10000000
+Nodos podados: 43177219
+Soluciones encontradas: 9206307
+Tiempo: 364.151 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Ejecucion 4
+Limite de nodos: 100000000
+Nodos visitados: 100000000
+Nodos podados: 402497637
+Soluciones encontradas: 92500033
+Tiempo: 3168.311 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Observacion:
+La ejecucion con limite de 1000000000 nodos fue detenida manualmente
+antes de terminar, por lo que no se utiliza como medicion experimental.
+
+Conclusion preliminar:
+El crecimiento de la exploracion es muy rapido incluso utilizando poda.
+Las ejecuciones controladas permiten observar el aumento del costo sin
+confundir resultados parciales con resultados completos.

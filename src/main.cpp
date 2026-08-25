@@ -4,68 +4,153 @@
 #include <iostream>
 #include <string>
 
-int main() {
-    const std::string alfabetoPrueba = "abAB12!";
+void mostrarMetricas(
+    const std::string& nombre,
+    const MetricasBT& metricas
+) {
+    std::cout << nombre << ":\n";
+    std::cout << "  Nodos visitados: "
+              << metricas.nodosVisitados << "\n";
+    std::cout << "  Nodos podados: "
+              << metricas.nodosPodados << "\n";
+    std::cout << "  Soluciones: "
+              << metricas.soluciones << "\n";
+    std::cout << "  Tiempo: "
+              << metricas.tiempoMs << " ms\n";
+}
+
+int main(int argc, char* argv[]) {
+    const std::string alfabetoCompleto =
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "0123456789"
+        "!@#$%";
+
+    const std::string alfabetoPrueba =
+        "abAB12!";
+
+    if (argc != 2) {
+        std::cout
+            << "Uso:\n"
+            << "  ./ada_p1 prueba\n"
+            << "  ./ada_p1 referencia\n"
+            << "  ./ada_p1 equipo_n8\n"
+            << "  ./ada_p1 equipo_n6\n"
+            << "  ./ada_p1 equipo_n10\n"
+            << "  ./ada_p1 relajada_n8\n"
+            << "  ./ada_p1 sin_restricciones_n6\n";
+
+        return 0;
+    }
+
+    std::string opcion = argv[1];
 
     Politica politica;
-    politica.n = 4;
-    politica.minLower = 1;
-    politica.minUpper = 1;
-    politica.minDigit = 1;
-    politica.minSymbol = 1;
-    politica.sinRepetidosConsecutivos = true;
+    std::string alfabeto;
 
-    MetricasBT conPoda =
-        ejecutarConPoda(politica, alfabetoPrueba);
+    if (opcion == "prueba") {
+        politica = {4, 1, 1, 1, 1, true};
+        alfabeto = alfabetoPrueba;
 
-    MetricasBT sinPoda =
-        ejecutarSinPoda(politica, alfabetoPrueba);
+    } else if (opcion == "referencia") {
+        politica = {6, 2, 1, 1, 1, true};
+        alfabeto = alfabetoCompleto;
 
-    double reduccion = 0.0;
+    } else if (opcion == "equipo_n8") {
+        politica = {8, 3, 2, 2, 1, true};
+        alfabeto = alfabetoCompleto;
 
-    if (sinPoda.nodosVisitados > 0) {
-        reduccion =
-            (static_cast<double>(
-                sinPoda.nodosVisitados -
-                conPoda.nodosVisitados
-            ) /
-            static_cast<double>(
-                sinPoda.nodosVisitados
-            )) * 100.0;
+    } else if (opcion == "equipo_n6") {
+        politica = {6, 3, 2, 2, 1, true};
+        alfabeto = alfabetoCompleto;
+
+    } else if (opcion == "equipo_n10") {
+        politica = {10, 3, 2, 2, 1, true};
+        alfabeto = alfabetoCompleto;
+
+    } else if (opcion == "relajada_n8") {
+        politica = {8, 1, 0, 0, 0, true};
+        alfabeto = alfabetoCompleto;
+
+    } else if (opcion == "sin_restricciones_n6") {
+        politica = {6, 0, 0, 0, 0, false};
+        alfabeto = alfabetoCompleto;
+
+    } else {
+        std::cerr << "Opcion no valida.\n";
+        return 1;
     }
 
     std::cout << std::fixed << std::setprecision(3);
 
-    std::cout << "=== PRUEBA DE BACKTRACKING ===\n\n";
+    std::cout
+        << "\n====================================\n"
+        << opcion
+        << "\n====================================\n";
 
-    std::cout << "Con poda:\n";
-    std::cout << "Nodos visitados: "
-              << conPoda.nodosVisitados << "\n";
-    std::cout << "Nodos podados: "
-              << conPoda.nodosPodados << "\n";
-    std::cout << "Soluciones: "
-              << conPoda.soluciones << "\n";
-    std::cout << "Tiempo: "
-              << conPoda.tiempoMs << " ms\n\n";
+    MetricasBT conPoda =
+        ejecutarConPoda(
+            politica,
+            alfabeto
+        );
 
-    std::cout << "Sin poda:\n";
-    std::cout << "Nodos visitados: "
-              << sinPoda.nodosVisitados << "\n";
-    std::cout << "Soluciones: "
-              << sinPoda.soluciones << "\n";
-    std::cout << "Tiempo: "
-              << sinPoda.tiempoMs << " ms\n\n";
+    mostrarMetricas(
+        "Con poda",
+        conPoda
+    );
 
-    std::cout << "Reduccion de nodos: "
-              << reduccion << "%\n";
+    if (opcion == "prueba") {
+        std::cout << "\n";
 
-    if (conPoda.soluciones == sinPoda.soluciones) {
+        MetricasBT sinPoda =
+            ejecutarSinPoda(
+                politica,
+                alfabeto
+            );
+
+        mostrarMetricas(
+            "Sin poda",
+            sinPoda
+        );
+
+        double reduccion = 0.0;
+
+        if (sinPoda.nodosVisitados > 0) {
+            reduccion =
+                (
+                    static_cast<double>(
+                        sinPoda.nodosVisitados -
+                        conPoda.nodosVisitados
+                    )
+                    /
+                    static_cast<double>(
+                        sinPoda.nodosVisitados
+                    )
+                ) * 100.0;
+        }
+
         std::cout
-            << "Verificacion: ambas versiones coinciden.\n";
+            << "\nReduccion de nodos: "
+            << reduccion
+            << "%\n";
+
+        if (
+            conPoda.soluciones ==
+            sinPoda.soluciones
+        ) {
+            std::cout
+                << "Verificacion: ambas versiones coinciden.\n";
+        } else {
+            std::cout
+                << "ERROR: las versiones no coinciden.\n";
+
+            return 1;
+        }
+
     } else {
         std::cout
-            << "ERROR: las versiones no coinciden.\n";
-        return 1;
+            << "\nLa version sin poda no se ejecuta "
+            << "automaticamente para esta instancia.\n";
     }
 
     return 0;

@@ -4,8 +4,8 @@ Curso: Análisis y Diseño de Algoritmos
 
 ## Integrantes
 
-- Pendiente
-- Pendiente
+- Samuel Serna 
+- Nicolas Ortiz 
 
 ## Módulos
 

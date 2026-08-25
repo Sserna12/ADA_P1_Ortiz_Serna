@@ -1,0 +1,20 @@
+Equipo:
+- Nicolas Ortiz
+- Samuel Serna
+
+Cadena para la semilla:
+ortizserna
+
+Suma ASCII:
+1105
+
+Semilla:
+1105
+
+Politica Backtracking principal:
+n = 8
+minLower = 3
+minUpper = 2
+minDigit = 2
+minSymbol = 1
+sin caracteres identicos consecutivos

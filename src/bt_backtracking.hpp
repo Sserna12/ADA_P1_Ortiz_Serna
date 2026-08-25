@@ -30,6 +30,13 @@ struct MetricasBT {
     std::uint64_t soluciones = 0;
 
     double tiempoMs = 0.0;
+
+    bool interrumpido = false;
+};
+
+struct LimitesBT {
+    // 0 significa sin limite.
+    std::uint64_t maxNodos = 0;
 };
 
 bool esMinuscula(char c);
@@ -51,24 +58,28 @@ void backtrackingConPoda(
     EstadoBT& estado,
     const Politica& politica,
     const std::string& alfabeto,
-    MetricasBT& metricas
+    MetricasBT& metricas,
+    const LimitesBT& limites
 );
 
 void exploracionSinPoda(
     EstadoBT& estado,
     const Politica& politica,
     const std::string& alfabeto,
-    MetricasBT& metricas
+    MetricasBT& metricas,
+    const LimitesBT& limites
 );
 
 MetricasBT ejecutarConPoda(
     const Politica& politica,
-    const std::string& alfabeto
+    const std::string& alfabeto,
+    const LimitesBT& limites = {}
 );
 
 MetricasBT ejecutarSinPoda(
     const Politica& politica,
-    const std::string& alfabeto
+    const std::string& alfabeto,
+    const LimitesBT& limites = {}
 );
 
 #endif

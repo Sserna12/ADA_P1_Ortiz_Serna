@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <string>
 
 int main() {
     Politica politica;
@@ -12,7 +13,35 @@ int main() {
     politica.minSymbol = 1;
     politica.sinRepetidosConsecutivos = true;
 
-    // Caso 1: solucion valida
+
+    // =====================================================
+    // CLASIFICACION
+    // =====================================================
+
+    assert(esMinuscula('a'));
+    assert(esMinuscula('z'));
+    assert(!esMinuscula('A'));
+
+    assert(esMayuscula('A'));
+    assert(esMayuscula('Z'));
+    assert(!esMayuscula('a'));
+
+    assert(esDigito('0'));
+    assert(esDigito('9'));
+    assert(!esDigito('a'));
+
+    assert(esSimbolo('!'));
+    assert(esSimbolo('@'));
+    assert(esSimbolo('#'));
+    assert(esSimbolo('$'));
+    assert(esSimbolo('%'));
+    assert(!esSimbolo('&'));
+
+
+    // =====================================================
+    // SOLUCION VALIDA
+    // =====================================================
+
     EstadoBT valido;
     valido.prefijo = "abcAB12!";
     valido.lower = 3;
@@ -22,7 +51,11 @@ int main() {
 
     assert(solucionValida(valido, politica));
 
-    // Caso 2: longitud incorrecta
+
+    // =====================================================
+    // LONGITUD INCORRECTA
+    // =====================================================
+
     EstadoBT longitudIncorrecta;
     longitudIncorrecta.prefijo = "abcAB12";
     longitudIncorrecta.lower = 3;
@@ -30,9 +63,18 @@ int main() {
     longitudIncorrecta.digit = 2;
     longitudIncorrecta.symbol = 0;
 
-    assert(!solucionValida(longitudIncorrecta, politica));
+    assert(
+        !solucionValida(
+            longitudIncorrecta,
+            politica
+        )
+    );
 
-    // Caso 3: repeticion consecutiva
+
+    // =====================================================
+    // REPETICION CONSECUTIVA
+    // =====================================================
+
     EstadoBT repetido;
     repetido.prefijo = "abbAB12!";
     repetido.lower = 3;
@@ -42,7 +84,11 @@ int main() {
 
     assert(!solucionValida(repetido, politica));
 
-    // Caso 4: estado todavia factible
+
+    // =====================================================
+    // ESTADO FACTIBLE
+    // =====================================================
+
     EstadoBT factible;
     factible.prefijo = "abA1";
     factible.lower = 2;
@@ -52,7 +98,11 @@ int main() {
 
     assert(estadoFactible(factible, politica));
 
-    // Caso 5: estado que debe podarse
+
+    // =====================================================
+    // ESTADO NO FACTIBLE
+    // =====================================================
+
     EstadoBT noFactible;
     noFactible.prefijo = "abcA12x";
     noFactible.lower = 4;
@@ -62,7 +112,11 @@ int main() {
 
     assert(!estadoFactible(noFactible, politica));
 
-    // Caso 6: comparar con poda vs sin poda en una instancia pequena
+
+    // =====================================================
+    // EQUIVALENCIA CON PODA VS SIN PODA
+    // =====================================================
+
     Politica politicaPequena;
     politicaPequena.n = 3;
     politicaPequena.minLower = 1;
@@ -74,23 +128,80 @@ int main() {
     std::string alfabetoPequeno = "aA1";
 
     MetricasBT conPoda =
-        ejecutarConPoda(politicaPequena, alfabetoPequeno);
+        ejecutarConPoda(
+            politicaPequena,
+            alfabetoPequeno
+        );
 
     MetricasBT sinPoda =
-        ejecutarSinPoda(politicaPequena, alfabetoPequeno);
+        ejecutarSinPoda(
+            politicaPequena,
+            alfabetoPequeno
+        );
 
-    // Ambas estrategias deben encontrar exactamente las mismas soluciones.
-    assert(conPoda.soluciones == sinPoda.soluciones);
+    assert(
+        conPoda.soluciones ==
+        sinPoda.soluciones
+    );
 
-    // Con tres caracteres distintos y tres posiciones,
-    // las 3! = 6 permutaciones son validas.
     assert(conPoda.soluciones == 6);
 
-    // La version con poda no deberia visitar mas nodos que la exhaustiva.
-    assert(conPoda.nodosVisitados <= sinPoda.nodosVisitados);
+    assert(
+        conPoda.nodosVisitados <=
+        sinPoda.nodosVisitados
+    );
+
+
+    // =====================================================
+    // INSTANCIA IMPOSIBLE
+    // =====================================================
+
+    Politica imposible;
+    imposible.n = 6;
+    imposible.minLower = 3;
+    imposible.minUpper = 2;
+    imposible.minDigit = 2;
+    imposible.minSymbol = 1;
+    imposible.sinRepetidosConsecutivos = true;
+
+    MetricasBT resultadoImposible =
+        ejecutarConPoda(
+            imposible,
+            "abAB12!"
+        );
+
+    assert(resultadoImposible.soluciones == 0);
+
+
+    // =====================================================
+    // LIMITE DE NODOS
+    // =====================================================
+
+    Politica grande;
+    grande.n = 8;
+    grande.minLower = 0;
+    grande.minUpper = 0;
+    grande.minDigit = 0;
+    grande.minSymbol = 0;
+    grande.sinRepetidosConsecutivos = false;
+
+    LimitesBT limite;
+    limite.maxNodos = 100;
+
+    MetricasBT limitada =
+        ejecutarSinPoda(
+            grande,
+            "abc",
+            limite
+        );
+
+    assert(limitada.interrumpido);
+    assert(limitada.nodosVisitados == 100);
+
 
     std::cout
-        << "Todas las pruebas de Backtracking pasaron correctamente.\n";
+        << "Todas las pruebas de Backtracking "
+        << "pasaron correctamente.\n";
 
     std::cout
         << "Soluciones prueba pequena: "
@@ -111,6 +222,11 @@ int main() {
         << "Nodos podados: "
         << conPoda.nodosPodados
         << "\n";
+
+    std::cout
+        << "Prueba de limite: "
+        << limitada.nodosVisitados
+        << " nodos, interrumpida correctamente.\n";
 
     return 0;
 }

@@ -3,6 +3,11 @@
 #include <algorithm>
 #include <chrono>
 
+
+// =========================================================
+// CLASIFICACION DE CARACTERES
+// =========================================================
+
 bool esMinuscula(char c) {
     return c >= 'a' && c <= 'z';
 }
@@ -23,7 +28,15 @@ bool esSimbolo(char c) {
            c == '%';
 }
 
-static void agregarCaracter(EstadoBT& estado, char c) {
+
+// =========================================================
+// MANEJO DEL ESTADO
+// =========================================================
+
+static void agregarCaracter(
+    EstadoBT& estado,
+    char c
+) {
     estado.prefijo.push_back(c);
 
     if (esMinuscula(c)) {
@@ -37,7 +50,11 @@ static void agregarCaracter(EstadoBT& estado, char c) {
     }
 }
 
-static void quitarCaracter(EstadoBT& estado, char c) {
+
+static void quitarCaracter(
+    EstadoBT& estado,
+    char c
+) {
     if (esMinuscula(c)) {
         estado.lower--;
     } else if (esMayuscula(c)) {
@@ -51,11 +68,32 @@ static void quitarCaracter(EstadoBT& estado, char c) {
     estado.prefijo.pop_back();
 }
 
+
+// =========================================================
+// CONTROL DEL LIMITE DE EXPLORACION
+// =========================================================
+
+static bool limiteAlcanzado(
+    const MetricasBT& metricas,
+    const LimitesBT& limites
+) {
+    return limites.maxNodos > 0 &&
+           metricas.nodosVisitados >= limites.maxNodos;
+}
+
+
+// =========================================================
+// VALIDACION DE SOLUCION COMPLETA
+// =========================================================
+
 bool solucionValida(
     const EstadoBT& estado,
     const Politica& politica
 ) {
-    if (static_cast<int>(estado.prefijo.size()) != politica.n) {
+    if (
+        static_cast<int>(estado.prefijo.size())
+        != politica.n
+    ) {
         return false;
     }
 
@@ -76,8 +114,15 @@ bool solucionValida(
     }
 
     if (politica.sinRepetidosConsecutivos) {
-        for (std::size_t i = 1; i < estado.prefijo.size(); ++i) {
-            if (estado.prefijo[i] == estado.prefijo[i - 1]) {
+        for (
+            std::size_t i = 1;
+            i < estado.prefijo.size();
+            ++i
+        ) {
+            if (
+                estado.prefijo[i]
+                == estado.prefijo[i - 1]
+            ) {
                 return false;
             }
         }
@@ -85,6 +130,11 @@ bool solucionValida(
 
     return true;
 }
+
+
+// =========================================================
+// FACTIBILIDAD DEL ESTADO PARCIAL
+// =========================================================
 
 bool estadoFactible(
     const EstadoBT& estado,
@@ -101,16 +151,28 @@ bool estadoFactible(
         politica.n - longitudActual;
 
     int faltanLower =
-        std::max(0, politica.minLower - estado.lower);
+        std::max(
+            0,
+            politica.minLower - estado.lower
+        );
 
     int faltanUpper =
-        std::max(0, politica.minUpper - estado.upper);
+        std::max(
+            0,
+            politica.minUpper - estado.upper
+        );
 
     int faltanDigit =
-        std::max(0, politica.minDigit - estado.digit);
+        std::max(
+            0,
+            politica.minDigit - estado.digit
+        );
 
     int faltanSymbol =
-        std::max(0, politica.minSymbol - estado.symbol);
+        std::max(
+            0,
+            politica.minSymbol - estado.symbol
+        );
 
     int faltantes =
         faltanLower +
@@ -121,15 +183,37 @@ bool estadoFactible(
     return faltantes <= restantes;
 }
 
+
+// =========================================================
+// BACKTRACKING CON PODA
+// =========================================================
+
 void backtrackingConPoda(
     EstadoBT& estado,
     const Politica& politica,
     const std::string& alfabeto,
-    MetricasBT& metricas
+    MetricasBT& metricas,
+    const LimitesBT& limites
 ) {
+    if (limiteAlcanzado(metricas, limites)) {
+        metricas.interrumpido = true;
+        return;
+    }
+
     metricas.nodosVisitados++;
 
-    if (static_cast<int>(estado.prefijo.size()) == politica.n) {
+    // Si el propio estado actual ya es infactible,
+    // no tiene sentido generar ninguno de sus hijos.
+    if (!estadoFactible(estado, politica)) {
+        metricas.nodosPodados++;
+        return;
+    }
+
+    // Caso base: cadena completa.
+    if (
+        static_cast<int>(estado.prefijo.size())
+        == politica.n
+    ) {
         if (solucionValida(estado, politica)) {
             metricas.soluciones++;
         }
@@ -138,6 +222,12 @@ void backtrackingConPoda(
     }
 
     for (char c : alfabeto) {
+        if (metricas.interrumpido) {
+            return;
+        }
+
+        // Poda local:
+        // no permitir caracteres identicos consecutivos.
         if (
             politica.sinRepetidosConsecutivos &&
             !estado.prefijo.empty() &&
@@ -154,7 +244,8 @@ void backtrackingConPoda(
                 estado,
                 politica,
                 alfabeto,
-                metricas
+                metricas,
+                limites
             );
         } else {
             metricas.nodosPodados++;
@@ -164,15 +255,29 @@ void backtrackingConPoda(
     }
 }
 
+
+// =========================================================
+// EXPLORACION EXHAUSTIVA SIN PODA
+// =========================================================
+
 void exploracionSinPoda(
     EstadoBT& estado,
     const Politica& politica,
     const std::string& alfabeto,
-    MetricasBT& metricas
+    MetricasBT& metricas,
+    const LimitesBT& limites
 ) {
+    if (limiteAlcanzado(metricas, limites)) {
+        metricas.interrumpido = true;
+        return;
+    }
+
     metricas.nodosVisitados++;
 
-    if (static_cast<int>(estado.prefijo.size()) == politica.n) {
+    if (
+        static_cast<int>(estado.prefijo.size())
+        == politica.n
+    ) {
         if (solucionValida(estado, politica)) {
             metricas.soluciones++;
         }
@@ -181,22 +286,33 @@ void exploracionSinPoda(
     }
 
     for (char c : alfabeto) {
+        if (metricas.interrumpido) {
+            return;
+        }
+
         agregarCaracter(estado, c);
 
         exploracionSinPoda(
             estado,
             politica,
             alfabeto,
-            metricas
+            metricas,
+            limites
         );
 
         quitarCaracter(estado, c);
     }
 }
 
+
+// =========================================================
+// EJECUCION CON PODA
+// =========================================================
+
 MetricasBT ejecutarConPoda(
     const Politica& politica,
-    const std::string& alfabeto
+    const std::string& alfabeto,
+    const LimitesBT& limites
 ) {
     EstadoBT estado;
     MetricasBT metricas;
@@ -208,7 +324,8 @@ MetricasBT ejecutarConPoda(
         estado,
         politica,
         alfabeto,
-        metricas
+        metricas,
+        limites
     );
 
     auto fin =
@@ -222,9 +339,15 @@ MetricasBT ejecutarConPoda(
     return metricas;
 }
 
+
+// =========================================================
+// EJECUCION SIN PODA
+// =========================================================
+
 MetricasBT ejecutarSinPoda(
     const Politica& politica,
-    const std::string& alfabeto
+    const std::string& alfabeto,
+    const LimitesBT& limites
 ) {
     EstadoBT estado;
     MetricasBT metricas;
@@ -236,7 +359,8 @@ MetricasBT ejecutarSinPoda(
         estado,
         politica,
         alfabeto,
-        metricas
+        metricas,
+        limites
     );
 
     auto fin =

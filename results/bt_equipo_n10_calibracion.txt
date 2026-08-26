@@ -1,0 +1,29 @@
+Instancia: equipo_n10
+Modulo: Backtracking
+Semilla: 1105
+Alfabeto utilizado: 67 caracteres
+
+Politica:
+n = 10
+minLower = 3
+minUpper = 2
+minDigit = 2
+minSymbol = 1
+sin repetidos consecutivos = true
+
+IMPORTANTE:
+Esta ejecucion fue interrumpida por limite de nodos.
+Las soluciones encontradas son parciales y NO representan
+el total de soluciones de la instancia.
+
+Limite de nodos: 10000000
+Nodos visitados: 10000000
+Nodos podados: 52628656
+Soluciones encontradas: 9065238
+Tiempo: 431.392 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Observacion:
+La instancia n=10 presenta un espacio de busqueda mucho mayor
+que n=8. Bajo el mismo limite de nodos, la ejecucion alcanza
+el tope antes de completar el arbol de busqueda.

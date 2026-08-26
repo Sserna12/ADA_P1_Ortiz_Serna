@@ -1,0 +1,213 @@
+RESUMEN DE RESULTADOS - BACKTRACKING
+
+Equipo:
+Ortiz - Serna
+Semilla: 1105
+
+Alfabeto utilizado:
+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%
+Tamano del alfabeto: 67 caracteres
+
+NOTA:
+El enunciado menciona un alfabeto de 69 simbolos, pero los conjuntos
+explicitamente enumerados suman 67 caracteres. Las pruebas se realizaron
+con los caracteres especificados de forma explicita.
+
+==================================================
+1. PRUEBA PEQUENA - COMPARACION COMPLETA
+==================================================
+
+n = 4
+Alfabeto de prueba: abAB12!
+minLower = 1
+minUpper = 1
+minDigit = 1
+minSymbol = 1
+sin repetidos consecutivos = true
+
+CON PODA:
+Nodos visitados: 356
+Nodos podados: 793
+Soluciones: 192
+Tiempo: 0.033 ms
+
+SIN PODA:
+Nodos visitados: 2801
+Soluciones: 192
+Tiempo: 0.063 ms
+
+Reduccion medida: 87.290%
+Relacion de tiempo sin/con poda: 1.921x
+Resultado: ambas versiones coinciden.
+Estado: COMPARACION COMPLETA
+
+==================================================
+2. POLITICA DEL EQUIPO - n = 6
+==================================================
+
+minLower = 3
+minUpper = 2
+minDigit = 2
+minSymbol = 1
+sin repetidos consecutivos = true
+
+Nodos teoricos sin poda: 91828963717
+
+CON PODA:
+Nodos visitados: 1
+Nodos podados: 1
+Soluciones: 0
+Tiempo: 0.000 ms
+Estado: COMPLETADO
+
+Observacion:
+La suma de los requisitos minimos es 8, pero n = 6.
+La instancia es infactible y la poda la detecta desde la raiz.
+
+COMPARACION CONTROLADA SIN PODA:
+Limite: 1000000 nodos
+Nodos visitados: 1000000
+Soluciones encontradas: 0
+Tiempo: 15.536 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+==================================================
+3. POLITICA DEL EQUIPO - n = 8
+==================================================
+
+minLower = 3
+minUpper = 2
+minDigit = 2
+minSymbol = 1
+sin repetidos consecutivos = true
+
+Limite: 10000000 nodos
+
+CON PODA:
+Nodos visitados: 10000000
+Nodos podados: 52628655
+Soluciones parciales: 9065240
+Tiempo: 423.289 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+==================================================
+4. POLITICA DEL EQUIPO - n = 10
+==================================================
+
+minLower = 3
+minUpper = 2
+minDigit = 2
+minSymbol = 1
+sin repetidos consecutivos = true
+
+Limite: 10000000 nodos
+
+CON PODA:
+Nodos visitados: 10000000
+Nodos podados: 52628656
+Soluciones parciales: 9065238
+Tiempo: 431.392 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+==================================================
+5. POLITICA RELAJADA - n = 8
+==================================================
+
+minLower = 1
+minUpper = 0
+minDigit = 0
+minSymbol = 0
+sin repetidos consecutivos = true
+
+Limite: 10000000 nodos
+
+CON PODA:
+Nodos visitados: 10000000
+Nodos podados: 151517
+Soluciones parciales: 9848479
+Tiempo: 130.724 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Observacion:
+La politica relajada produce mucha menos poda que la politica del equipo.
+
+==================================================
+6. SIN RESTRICCIONES - n = 6
+==================================================
+
+minLower = 0
+minUpper = 0
+minDigit = 0
+minSymbol = 0
+sin repetidos consecutivos = false
+
+Limite: 10000000 nodos
+
+CON PODA:
+Nodos visitados: 10000000
+Nodos podados: 0
+Soluciones parciales: 9850742
+Tiempo: 102.420 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Observacion:
+No existe ninguna condicion que permita descartar estados.
+Por esto se obtienen 0 nodos podados y el comportamiento equivale
+a una enumeracion exhaustiva.
+
+==================================================
+7. INSTANCIA DE REFERENCIA - n = 6
+==================================================
+
+minLower = 2
+minUpper = 1
+minDigit = 1
+minSymbol = 1
+sin repetidos consecutivos = true
+
+CALIBRACION CON PODA:
+
+100000 nodos:
+Tiempo: 12.447 ms
+Nodos podados: 615726
+Soluciones parciales: 89314
+
+1000000 nodos:
+Tiempo: 68.244 ms
+Nodos podados: 5158188
+Soluciones parciales: 908084
+
+10000000 nodos:
+Tiempo: 364.151 ms
+Nodos podados: 43177219
+Soluciones parciales: 9206307
+
+100000000 nodos:
+Tiempo: 3168.311 ms
+Nodos podados: 402497637
+Soluciones parciales: 92500033
+
+Todas estas ejecuciones fueron interrumpidas por limite de nodos.
+Las soluciones reportadas son parciales.
+
+==================================================
+CONCLUSIONES PRELIMINARES
+==================================================
+
+1. La poda puede reducir drasticamente el espacio de busqueda cuando
+   las restricciones permiten detectar estados inviables temprano.
+
+2. En equipo_n6 la poda detecta inmediatamente que la politica no puede
+   satisfacerse, visitando solamente el nodo raiz.
+
+3. Una politica mas relajada produce menos poda y se aproxima mas al
+   comportamiento de la enumeracion exhaustiva.
+
+4. Cuando no existen restricciones, el numero de nodos podados es cero.
+
+5. La comparacion completa pequena confirma que la poda conserva las
+   soluciones: ambas versiones encontraron exactamente 192 soluciones.
+
+6. Para las configuraciones grandes, las ejecuciones limitadas muestran
+   el crecimiento exponencial sin presentar resultados parciales como
+   resultados totales.

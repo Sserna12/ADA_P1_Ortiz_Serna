@@ -1,0 +1,42 @@
+Instancia: equipo_n6
+Modulo: Backtracking
+Tipo: comparacion con poda vs sin poda
+
+Politica:
+n = 6
+minLower = 3
+minUpper = 2
+minDigit = 2
+minSymbol = 1
+sin repetidos consecutivos = true
+
+Nodos teoricos sin poda: 91828963717
+Limite aplicado: 1000000 nodos
+
+CON PODA:
+Nodos visitados: 1
+Nodos podados: 1
+Soluciones encontradas: 0
+Tiempo: 0.000 ms
+Estado: COMPLETADO
+
+SIN PODA:
+Nodos visitados: 1000000
+Nodos podados: 0
+Soluciones encontradas: 0
+Tiempo: 15.536 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Resultado:
+La comparacion es PARCIAL porque la version sin poda alcanzo
+el limite antes de recorrer todo el arbol.
+
+La version con poda detecta desde el nodo raiz que la instancia
+es imposible, ya que la suma de los requisitos minimos es 8
+y la longitud disponible es solamente n = 6.
+
+La version sin poda no detecta esta inviabilidad de forma temprana
+y continua explorando el espacio exhaustivo.
+
+Esta ejecucion se utiliza como evidencia del beneficio de la poda,
+pero no como prueba completa de equivalencia de soluciones.

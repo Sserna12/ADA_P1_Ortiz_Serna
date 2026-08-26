@@ -1,0 +1,28 @@
+Instancia: relajada_n8
+Modulo: Backtracking
+Alfabeto utilizado: 67 caracteres
+
+Politica:
+n = 8
+minLower = 1
+minUpper = 0
+minDigit = 0
+minSymbol = 0
+sin repetidos consecutivos = true
+
+IMPORTANTE:
+Esta ejecucion fue interrumpida por limite de nodos.
+Las soluciones encontradas son parciales y NO representan
+el total de soluciones de la instancia.
+
+Limite de nodos: 10000000
+Nodos visitados: 10000000
+Nodos podados: 151517
+Soluciones encontradas: 9848479
+Tiempo: 130.724 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Observacion:
+La politica relajada genera mucha menos poda que la politica
+del equipo. Bajo el mismo limite de 10000000 nodos se podan
+menos estados y la ejecucion tarda menos tiempo.

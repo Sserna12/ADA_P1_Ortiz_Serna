@@ -7,6 +7,10 @@
 #include <string>
 
 
+// =========================================================
+// MOSTRAR METRICAS
+// =========================================================
+
 static void mostrarMetricas(
     const std::string& titulo,
     const MetricasBT& metricas
@@ -44,6 +48,11 @@ static void mostrarMetricas(
 }
 
 
+// =========================================================
+// TAMANO TEORICO DEL ARBOL EXHAUSTIVO
+// sumatoria desde k = 0 hasta n de |Sigma|^k
+// =========================================================
+
 static std::uint64_t nodosArbolExhaustivo(
     std::uint64_t tamAlfabeto,
     int n
@@ -77,6 +86,10 @@ static std::uint64_t nodosArbolExhaustivo(
 }
 
 
+// =========================================================
+// PORCENTAJE DE REDUCCION
+// =========================================================
+
 static double calcularReduccion(
     std::uint64_t nodosSinPoda,
     std::uint64_t nodosConPoda
@@ -85,20 +98,27 @@ static double calcularReduccion(
         return 0.0;
     }
 
-    return
+    return (
         (
-            static_cast<double>(
-                nodosSinPoda - nodosConPoda
-            )
-            /
-            static_cast<double>(
-                nodosSinPoda
-            )
-        ) * 100.0;
+            static_cast<double>(nodosSinPoda)
+            -
+            static_cast<double>(nodosConPoda)
+        )
+        /
+        static_cast<double>(nodosSinPoda)
+    ) * 100.0;
 }
 
 
-int main(int argc, char* argv[]) {
+// =========================================================
+// CARGAR CONFIGURACION
+// =========================================================
+
+static bool cargarConfiguracion(
+    const std::string& nombre,
+    Politica& politica,
+    std::string& alfabeto
+) {
     const std::string alfabetoCompleto =
         "abcdefghijklmnopqrstuvwxyz"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -109,42 +129,7 @@ int main(int argc, char* argv[]) {
         "abAB12!";
 
 
-    if (argc < 2 || argc > 3) {
-        std::cout
-            << "Uso:\n\n"
-            << "./ada_p1 prueba\n"
-            << "./ada_p1 referencia [max_nodos]\n"
-            << "./ada_p1 equipo_n6 [max_nodos]\n"
-            << "./ada_p1 equipo_n8 [max_nodos]\n"
-            << "./ada_p1 equipo_n10 [max_nodos]\n"
-            << "./ada_p1 relajada_n8 [max_nodos]\n"
-            << "./ada_p1 sin_restricciones_n6 [max_nodos]\n";
-
-        return 0;
-    }
-
-
-    std::string opcion = argv[1];
-
-    LimitesBT limites;
-
-    if (argc == 3) {
-        try {
-            limites.maxNodos =
-                std::stoull(argv[2]);
-        } catch (...) {
-            std::cerr
-                << "El limite de nodos no es valido.\n";
-            return 1;
-        }
-    }
-
-
-    Politica politica;
-    std::string alfabeto;
-
-
-    if (opcion == "prueba") {
+    if (nombre == "prueba") {
         politica = {
             4,
             1,
@@ -155,8 +140,11 @@ int main(int argc, char* argv[]) {
         };
 
         alfabeto = alfabetoPrueba;
+        return true;
+    }
 
-    } else if (opcion == "referencia") {
+
+    if (nombre == "referencia") {
         politica = {
             6,
             2,
@@ -167,8 +155,11 @@ int main(int argc, char* argv[]) {
         };
 
         alfabeto = alfabetoCompleto;
+        return true;
+    }
 
-    } else if (opcion == "equipo_n6") {
+
+    if (nombre == "equipo_n6") {
         politica = {
             6,
             3,
@@ -179,8 +170,11 @@ int main(int argc, char* argv[]) {
         };
 
         alfabeto = alfabetoCompleto;
+        return true;
+    }
 
-    } else if (opcion == "equipo_n8") {
+
+    if (nombre == "equipo_n8") {
         politica = {
             8,
             3,
@@ -191,8 +185,11 @@ int main(int argc, char* argv[]) {
         };
 
         alfabeto = alfabetoCompleto;
+        return true;
+    }
 
-    } else if (opcion == "equipo_n10") {
+
+    if (nombre == "equipo_n10") {
         politica = {
             10,
             3,
@@ -203,8 +200,11 @@ int main(int argc, char* argv[]) {
         };
 
         alfabeto = alfabetoCompleto;
+        return true;
+    }
 
-    } else if (opcion == "relajada_n8") {
+
+    if (nombre == "relajada_n8") {
         politica = {
             8,
             1,
@@ -215,10 +215,11 @@ int main(int argc, char* argv[]) {
         };
 
         alfabeto = alfabetoCompleto;
+        return true;
+    }
 
-    } else if (
-        opcion == "sin_restricciones_n6"
-    ) {
+
+    if (nombre == "sin_restricciones_n6") {
         politica = {
             6,
             0,
@@ -229,23 +230,34 @@ int main(int argc, char* argv[]) {
         };
 
         alfabeto = alfabetoCompleto;
-
-    } else {
-        std::cerr
-            << "Opcion no valida.\n";
-
-        return 1;
+        return true;
     }
 
 
-    std::cout
-        << std::fixed
-        << std::setprecision(3);
+    return false;
+}
+
+
+// =========================================================
+// MOSTRAR DATOS DE LA INSTANCIA
+// =========================================================
+
+static std::uint64_t mostrarInstancia(
+    const std::string& nombre,
+    const Politica& politica,
+    const std::string& alfabeto,
+    const LimitesBT& limites
+) {
+    std::uint64_t nodosTeoricos =
+        nodosArbolExhaustivo(
+            alfabeto.size(),
+            politica.n
+        );
 
 
     std::cout
         << "\n====================================\n"
-        << opcion
+        << nombre
         << "\n====================================\n";
 
     std::cout
@@ -258,12 +270,35 @@ int main(int argc, char* argv[]) {
         << alfabeto.size()
         << "\n";
 
+    std::cout
+        << "minLower: "
+        << politica.minLower
+        << "\n";
 
-    std::uint64_t nodosTeoricos =
-        nodosArbolExhaustivo(
-            alfabeto.size(),
-            politica.n
-        );
+    std::cout
+        << "minUpper: "
+        << politica.minUpper
+        << "\n";
+
+    std::cout
+        << "minDigit: "
+        << politica.minDigit
+        << "\n";
+
+    std::cout
+        << "minSymbol: "
+        << politica.minSymbol
+        << "\n";
+
+    std::cout
+        << "Sin repetidos consecutivos: "
+        << (
+            politica.sinRepetidosConsecutivos
+            ? "si"
+            : "no"
+        )
+        << "\n";
+
 
     if (nodosTeoricos > 0) {
         std::cout
@@ -288,12 +323,36 @@ int main(int argc, char* argv[]) {
     }
 
 
+    return nodosTeoricos;
+}
+
+
+// =========================================================
+// EJECUCION NORMAL: SOLO BACKTRACKING CON PODA
+// =========================================================
+
+static int ejecutarInstancia(
+    const std::string& nombre,
+    const Politica& politica,
+    const std::string& alfabeto,
+    const LimitesBT& limites
+) {
+    std::uint64_t nodosTeoricos =
+        mostrarInstancia(
+            nombre,
+            politica,
+            alfabeto,
+            limites
+        );
+
+
     MetricasBT conPoda =
         ejecutarConPoda(
             politica,
             alfabeto,
             limites
         );
+
 
     mostrarMetricas(
         "=== CON PODA ===",
@@ -320,66 +379,340 @@ int main(int argc, char* argv[]) {
             << "\nReduccion final del espacio: "
             << "NO CALCULADA\n";
 
-        std::cout
-            << "Motivo: la ejecucion con poda "
-            << "no termino completamente.\n";
+        if (conPoda.interrumpido) {
+            std::cout
+                << "Motivo: la ejecucion con poda "
+                << "fue interrumpida por el limite.\n";
+        }
     }
 
 
-    if (opcion == "prueba") {
-        MetricasBT sinPoda =
-            ejecutarSinPoda(
-                politica,
-                alfabeto,
-                limites
-            );
+    return 0;
+}
 
-        mostrarMetricas(
-            "=== SIN PODA ===",
-            sinPoda
+
+// =========================================================
+// COMPARACION CON PODA VS SIN PODA
+// =========================================================
+
+static int ejecutarComparacion(
+    const std::string& nombre,
+    const Politica& politica,
+    const std::string& alfabeto,
+    const LimitesBT& limites
+) {
+    mostrarInstancia(
+        "COMPARACION: " + nombre,
+        politica,
+        alfabeto,
+        limites
+    );
+
+
+    std::cout
+        << "\nEjecutando version CON poda...\n";
+
+
+    MetricasBT conPoda =
+        ejecutarConPoda(
+            politica,
+            alfabeto,
+            limites
         );
 
+
+    mostrarMetricas(
+        "=== CON PODA ===",
+        conPoda
+    );
+
+
+    std::cout
+        << "\nEjecutando version SIN poda...\n";
+
+
+    MetricasBT sinPoda =
+        ejecutarSinPoda(
+            politica,
+            alfabeto,
+            limites
+        );
+
+
+    mostrarMetricas(
+        "=== SIN PODA ===",
+        sinPoda
+    );
+
+
+    // -----------------------------------------------------
+    // COMPARACION COMPLETA
+    // -----------------------------------------------------
+
+    if (
+        !conPoda.interrumpido &&
+        !sinPoda.interrumpido
+    ) {
+        std::cout
+            << "\n=== RESULTADO DE LA COMPARACION ===\n";
+
         if (
-            !conPoda.interrumpido &&
-            !sinPoda.interrumpido
+            conPoda.soluciones ==
+            sinPoda.soluciones
         ) {
-            double reduccionReal =
-                calcularReduccion(
-                    sinPoda.nodosVisitados,
-                    conPoda.nodosVisitados
-                );
+            std::cout
+                << "Soluciones: ambas versiones coinciden.\n";
+        } else {
+            std::cout
+                << "ERROR: las versiones encontraron "
+                << "diferente numero de soluciones.\n";
+
+            return 1;
+        }
+
+
+        double reduccion =
+            calcularReduccion(
+                sinPoda.nodosVisitados,
+                conPoda.nodosVisitados
+            );
+
+
+        std::cout
+            << "Nodos sin poda: "
+            << sinPoda.nodosVisitados
+            << "\n";
+
+        std::cout
+            << "Nodos con poda: "
+            << conPoda.nodosVisitados
+            << "\n";
+
+        std::cout
+            << "Reduccion medida: "
+            << reduccion
+            << "%\n";
+
+
+        if (conPoda.tiempoMs > 0.0) {
+            double relacionTiempo =
+                sinPoda.tiempoMs
+                /
+                conPoda.tiempoMs;
 
             std::cout
-                << "\nReduccion medida: "
-                << reduccionReal
-                << "%\n";
-
-            if (
-                conPoda.soluciones ==
-                sinPoda.soluciones
-            ) {
-                std::cout
-                    << "Verificacion: ambas versiones coinciden.\n";
-            } else {
-                std::cout
-                    << "ERROR: las versiones no coinciden.\n";
-
-                return 1;
-            }
+                << "Relacion de tiempo sin/con poda: "
+                << relacionTiempo
+                << "x\n";
         }
+
+
+        std::cout
+            << "Comparacion: COMPLETA\n";
 
         return 0;
     }
 
 
-    std::cout
-        << "\nLa version sin poda no se ejecuta "
-        << "automaticamente en instancias reales.\n";
+    // -----------------------------------------------------
+    // COMPARACION PARCIAL
+    // -----------------------------------------------------
 
     std::cout
-        << "El numero teorico de nodos sin poda "
-        << "se muestra arriba para la comparacion.\n";
+        << "\n=== RESULTADO DE LA COMPARACION ===\n";
+
+    std::cout
+        << "Comparacion: PARCIAL\n";
+
+    std::cout
+        << "Al menos una version alcanzo "
+        << "el limite de nodos.\n";
+
+    std::cout
+        << "Las soluciones encontradas NO pueden "
+        << "compararse como totales.\n";
+
+    std::cout
+        << "Esta ejecucion sirve como calibracion "
+        << "del costo computacional.\n";
 
 
     return 0;
+}
+
+
+// =========================================================
+// AYUDA
+// =========================================================
+
+static void mostrarAyuda() {
+    std::cout
+        << "Uso:\n\n"
+
+        << "Ejecucion con poda:\n"
+        << "  ./ada_p1 prueba\n"
+        << "  ./ada_p1 referencia [max_nodos]\n"
+        << "  ./ada_p1 equipo_n6 [max_nodos]\n"
+        << "  ./ada_p1 equipo_n8 [max_nodos]\n"
+        << "  ./ada_p1 equipo_n10 [max_nodos]\n"
+        << "  ./ada_p1 relajada_n8 [max_nodos]\n"
+        << "  ./ada_p1 sin_restricciones_n6 [max_nodos]\n\n"
+
+        << "Comparacion con poda vs sin poda:\n"
+        << "  ./ada_p1 comparar prueba\n"
+        << "  ./ada_p1 comparar referencia max_nodos\n"
+        << "  ./ada_p1 comparar equipo_n6 max_nodos\n"
+        << "  ./ada_p1 comparar equipo_n8 max_nodos\n"
+        << "  ./ada_p1 comparar equipo_n10 max_nodos\n"
+        << "  ./ada_p1 comparar relajada_n8 max_nodos\n"
+        << "  ./ada_p1 comparar sin_restricciones_n6 max_nodos\n";
+}
+
+
+// =========================================================
+// MAIN
+// =========================================================
+
+int main(int argc, char* argv[]) {
+    std::cout
+        << std::fixed
+        << std::setprecision(3);
+
+
+    if (argc < 2) {
+        mostrarAyuda();
+        return 0;
+    }
+
+
+    // =====================================================
+    // MODO COMPARACION
+    // =====================================================
+
+    if (std::string(argv[1]) == "comparar") {
+        if (argc < 3 || argc > 4) {
+            mostrarAyuda();
+            return 1;
+        }
+
+
+        std::string nombre = argv[2];
+
+        Politica politica;
+        std::string alfabeto;
+
+
+        if (
+            !cargarConfiguracion(
+                nombre,
+                politica,
+                alfabeto
+            )
+        ) {
+            std::cerr
+                << "Configuracion no valida.\n";
+
+            return 1;
+        }
+
+
+        LimitesBT limites;
+
+
+        if (argc == 4) {
+            try {
+                limites.maxNodos =
+                    std::stoull(argv[3]);
+            } catch (...) {
+                std::cerr
+                    << "El limite de nodos no es valido.\n";
+
+                return 1;
+            }
+        }
+
+
+        // La prueba pequena puede ejecutarse completa.
+        if (nombre == "prueba") {
+            limites.maxNodos = 0;
+        } else {
+            // Para cualquier instancia real exigimos limite
+            // al ejecutar la version sin poda.
+            if (limites.maxNodos == 0) {
+                std::cerr
+                    << "SEGURIDAD: para comparar una instancia "
+                    << "real debes indicar max_nodos.\n";
+
+                std::cerr
+                    << "Ejemplo:\n"
+                    << "./ada_p1 comparar "
+                    << nombre
+                    << " 1000000\n";
+
+                return 1;
+            }
+        }
+
+
+        return ejecutarComparacion(
+            nombre,
+            politica,
+            alfabeto,
+            limites
+        );
+    }
+
+
+    // =====================================================
+    // MODO NORMAL
+    // =====================================================
+
+    if (argc > 3) {
+        mostrarAyuda();
+        return 1;
+    }
+
+
+    std::string nombre = argv[1];
+
+    Politica politica;
+    std::string alfabeto;
+
+
+    if (
+        !cargarConfiguracion(
+            nombre,
+            politica,
+            alfabeto
+        )
+    ) {
+        std::cerr
+            << "Configuracion no valida.\n";
+
+        return 1;
+    }
+
+
+    LimitesBT limites;
+
+
+    if (argc == 3) {
+        try {
+            limites.maxNodos =
+                std::stoull(argv[2]);
+        } catch (...) {
+            std::cerr
+                << "El limite de nodos no es valido.\n";
+
+            return 1;
+        }
+    }
+
+
+    return ejecutarInstancia(
+        nombre,
+        politica,
+        alfabeto,
+        limites
+    );
 }

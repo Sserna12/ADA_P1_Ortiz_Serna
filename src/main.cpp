@@ -1,9 +1,9 @@
 #include "bt_backtracking.hpp"
 
 #include <cstdint>
-#include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <string>
 
 
@@ -11,8 +11,7 @@ static void mostrarMetricas(
     const std::string& titulo,
     const MetricasBT& metricas
 ) {
-    std::cout
-        << "\n" << titulo << "\n";
+    std::cout << "\n" << titulo << "\n";
 
     std::cout
         << "Nodos visitados: "
@@ -45,22 +44,55 @@ static void mostrarMetricas(
 }
 
 
-static double calcularReduccion(
-    std::uint64_t sinPoda,
-    std::uint64_t conPoda
+static std::uint64_t nodosArbolExhaustivo(
+    std::uint64_t tamAlfabeto,
+    int n
 ) {
-    if (sinPoda == 0) {
+    std::uint64_t total = 1;
+    std::uint64_t potencia = 1;
+
+    for (int k = 1; k <= n; ++k) {
+        if (
+            potencia >
+            std::numeric_limits<std::uint64_t>::max()
+            / tamAlfabeto
+        ) {
+            return 0;
+        }
+
+        potencia *= tamAlfabeto;
+
+        if (
+            total >
+            std::numeric_limits<std::uint64_t>::max()
+            - potencia
+        ) {
+            return 0;
+        }
+
+        total += potencia;
+    }
+
+    return total;
+}
+
+
+static double calcularReduccion(
+    std::uint64_t nodosSinPoda,
+    std::uint64_t nodosConPoda
+) {
+    if (nodosSinPoda == 0) {
         return 0.0;
     }
 
     return
         (
             static_cast<double>(
-                sinPoda - conPoda
+                nodosSinPoda - nodosConPoda
             )
             /
             static_cast<double>(
-                sinPoda
+                nodosSinPoda
             )
         ) * 100.0;
 }
@@ -226,6 +258,25 @@ int main(int argc, char* argv[]) {
         << alfabeto.size()
         << "\n";
 
+
+    std::uint64_t nodosTeoricos =
+        nodosArbolExhaustivo(
+            alfabeto.size(),
+            politica.n
+        );
+
+    if (nodosTeoricos > 0) {
+        std::cout
+            << "Nodos teoricos sin poda: "
+            << nodosTeoricos
+            << "\n";
+    } else {
+        std::cout
+            << "Nodos teoricos sin poda: "
+            << "fuera de rango\n";
+    }
+
+
     if (limites.maxNodos == 0) {
         std::cout
             << "Limite de nodos: sin limite\n";
@@ -236,10 +287,6 @@ int main(int argc, char* argv[]) {
             << "\n";
     }
 
-
-    // -----------------------------------------------------
-    // CON PODA
-    // -----------------------------------------------------
 
     MetricasBT conPoda =
         ejecutarConPoda(
@@ -254,9 +301,30 @@ int main(int argc, char* argv[]) {
     );
 
 
-    // -----------------------------------------------------
-    // PRUEBA PEQUENA
-    // -----------------------------------------------------
+    if (
+        !conPoda.interrumpido &&
+        nodosTeoricos > 0
+    ) {
+        double reduccion =
+            calcularReduccion(
+                nodosTeoricos,
+                conPoda.nodosVisitados
+            );
+
+        std::cout
+            << "\nReduccion teorica del espacio: "
+            << reduccion
+            << "%\n";
+    } else {
+        std::cout
+            << "\nReduccion final del espacio: "
+            << "NO CALCULADA\n";
+
+        std::cout
+            << "Motivo: la ejecucion con poda "
+            << "no termino completamente.\n";
+    }
+
 
     if (opcion == "prueba") {
         MetricasBT sinPoda =
@@ -275,15 +343,15 @@ int main(int argc, char* argv[]) {
             !conPoda.interrumpido &&
             !sinPoda.interrumpido
         ) {
-            double reduccion =
+            double reduccionReal =
                 calcularReduccion(
                     sinPoda.nodosVisitados,
                     conPoda.nodosVisitados
                 );
 
             std::cout
-                << "\nReduccion de nodos: "
-                << reduccion
+                << "\nReduccion medida: "
+                << reduccionReal
                 << "%\n";
 
             if (
@@ -304,17 +372,13 @@ int main(int argc, char* argv[]) {
     }
 
 
-    // -----------------------------------------------------
-    // INSTANCIAS REALES
-    // -----------------------------------------------------
-
     std::cout
         << "\nLa version sin poda no se ejecuta "
-        << "automaticamente en las instancias reales.\n";
+        << "automaticamente en instancias reales.\n";
 
     std::cout
-        << "Se ejecutara posteriormente de forma "
-        << "controlada para la comparacion experimental.\n";
+        << "El numero teorico de nodos sin poda "
+        << "se muestra arriba para la comparacion.\n";
 
 
     return 0;

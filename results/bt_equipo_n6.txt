@@ -1,5 +1,7 @@
 Instancia: equipo_n6
+Modulo: Backtracking
 Semilla: 1105
+Alfabeto utilizado: 67 caracteres
 
 Politica:
 n = 6
@@ -9,12 +11,22 @@ minDigit = 2
 minSymbol = 1
 sin repetidos consecutivos = true
 
-Resultado con poda:
-nodos visitados = 1
-nodos podados = 67
-soluciones = 0
-tiempo = 0.002 ms
+Resultado:
+
+Nodos teoricos sin poda: 91828963717
+Nodos visitados con poda: 1
+Nodos podados: 1
+Soluciones encontradas: 0
+Tiempo: 0.000 ms
+Estado: COMPLETADO
+
+Reduccion teorica del espacio: aproximadamente 100%
 
 Observacion:
-La suma de requisitos minimos es 8 y n = 6, por lo que la instancia es infactible.
-La poda detecta la imposibilidad antes de explorar niveles completos del arbol.
+La suma de los requisitos minimos es 8, pero la longitud
+de la instancia es n = 6. Por lo tanto, ninguna solucion es
+posible.
+
+La poda detecta la inviabilidad desde el estado inicial,
+por lo que solo se visita el nodo raiz en lugar de explorar
+el arbol exhaustivo.

@@ -1,0 +1,32 @@
+Instancia: sin_restricciones_n6
+Modulo: Backtracking
+Alfabeto utilizado: 67 caracteres
+
+Politica:
+n = 6
+minLower = 0
+minUpper = 0
+minDigit = 0
+minSymbol = 0
+sin repetidos consecutivos = false
+
+IMPORTANTE:
+Esta ejecucion fue interrumpida por limite de nodos.
+Las soluciones encontradas son parciales y NO representan
+el total de soluciones de la instancia.
+
+Limite de nodos: 10000000
+Nodos visitados: 10000000
+Nodos podados: 0
+Soluciones encontradas: 9850742
+Tiempo: 102.420 ms
+Estado: INTERRUMPIDO POR LIMITE
+
+Observacion:
+Esta configuracion no tiene restricciones de composicion ni
+prohibicion de caracteres repetidos consecutivos. Por esta razon,
+el algoritmo no puede realizar poda y se comporta como una
+enumeracion exhaustiva.
+
+El resultado de 0 nodos podados confirma experimentalmente
+el escenario de poda nula.

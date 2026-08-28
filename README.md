@@ -4,29 +4,56 @@ Curso: Análisis y Diseño de Algoritmos
 
 ## Integrantes
 
-- Samuel Serna 
-- Nicolas Ortiz 
+- Samuel Serna
+- Nicolas Ortiz
 
-## Módulos
+## Descripción
+
+Este proyecto implementa y analiza dos estrategias algorítmicas:
 
 - Fuerza Bruta
-- Backtracking
-- QA / Pruebas
+- Backtracking con poda
 
-## Estructura
+El objetivo es comparar experimentalmente el crecimiento del espacio de búsqueda, medir tiempos de ejecución y analizar el efecto de las podas sobre la cantidad de estados explorados.
 
-- `src/`: código fuente.
-- `tests/`: pruebas y verificación de instancias.
-- `resources/`: archivos de entrada y diccionario.
-- `results/`: resultados experimentales.
-- `report/`: informe técnico.
+El proyecto utiliza C++17.
 
-## Compilación
+---
 
-```bash
-g++ -std=c++17 -O2 -o ada_p1 src/main.cpp
+## Estructura del repositorio
 
-
-```
-
-Las instrucciones completas se agregarán durante el desarrollo.
+```text
+ADA_P1_Ortiz_Serna/
+│
+├── src/
+│   ├── main.cpp
+│   ├── bt_backtracking.cpp
+│   ├── bt_backtracking.hpp
+│   └── archivos del módulo de Fuerza Bruta
+│
+├── tests/
+│   └── test_backtracking.cpp
+│
+├── resources/
+│   └── instancia_equipo.txt
+│
+├── results/
+│   ├── bt_equipo_n6.txt
+│   ├── bt_equipo_n8_calibracion.txt
+│   ├── bt_equipo_n10_calibracion.txt
+│   ├── bt_relajada_n8_calibracion.txt
+│   ├── bt_sin_restricciones_n6_calibracion.txt
+│   ├── bt_referencia_calibracion.txt
+│   ├── bt_comparacion_equipo_n6.txt
+│   ├── bt_resumen.txt
+│   ├── bt_resultados_grafica.csv
+│   ├── bt_tiempo_vs_n.png
+│   └── bt_tiempo_vs_nodos.png
+│
+├── scripts/
+│   └── graficas_bt.py
+│
+├── report/
+│   └── aporte_backtracking.md
+│
+└── README.md

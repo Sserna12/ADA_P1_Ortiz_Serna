@@ -1,21 +1,577 @@
 #include "bt_backtracking.hpp"
 
+#include "fb_core.hpp"
+#include "fb_dictionary.hpp"
+#include "fb_instancias.hpp"
+
+#include <algorithm>
 #include <cstdint>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <sstream>
 #include <string>
+#include <vector>
 
 
 // =========================================================
-// MOSTRAR METRICAS
+// FUERZA BRUTA
 // =========================================================
 
-static void mostrarMetricas(
+static void imprimirUsoFB() {
+    std::cout
+        << "Fuerza Bruta:\n"
+        << "  ./ada_p1 brute --hash HASH --alfabeto a1|a2 --min n [--max n]\n"
+        << "  ./ada_p1 dict --hash HASH --diccionario ruta\n"
+        << "  ./ada_p1 seed --apellidos apellido1,apellido2\n"
+        << "  ./ada_p1 experiment --config archivo.csv --out salida.csv "
+        << "[--diccionario ruta]\n";
+}
+
+
+static std::string obtenerArg(
+    const std::vector<std::string>& args,
+    const std::string& clave,
+    const std::string& porDefecto = ""
+) {
+    for (std::size_t i = 0; i + 1 < args.size(); ++i) {
+        if (args[i] == clave) {
+            return args[i + 1];
+        }
+    }
+
+    return porDefecto;
+}
+
+
+static std::vector<std::string> separarPorComas(
+    const std::string& texto
+) {
+    std::vector<std::string> partes;
+
+    std::stringstream ss(texto);
+    std::string parte;
+
+    while (std::getline(ss, parte, ',')) {
+        if (!parte.empty()) {
+            partes.push_back(parte);
+        }
+    }
+
+    return partes;
+}
+
+
+static int cmdBrute(
+    const std::vector<std::string>& args
+) {
+    const std::string hash =
+        obtenerArg(args, "--hash");
+
+    const std::string nombreAlfabeto =
+        obtenerArg(args, "--alfabeto");
+
+    const std::string minStr =
+        obtenerArg(args, "--min");
+
+    const std::string maxStr =
+        obtenerArg(args, "--max", minStr);
+
+
+    if (
+        hash.empty() ||
+        nombreAlfabeto.empty() ||
+        minStr.empty()
+    ) {
+        std::cerr
+            << "Faltan argumentos obligatorios para 'brute'.\n";
+
+        imprimirUsoFB();
+        return 1;
+    }
+
+
+    const fb::Alfabeto& alfabeto =
+        fb::alfabetoPorNombre(nombreAlfabeto);
+
+    const int minLen =
+        std::stoi(minStr);
+
+    const int maxLen =
+        std::stoi(maxStr);
+
+
+    fb::ResultadoBusqueda r =
+        fb::buscarPorFuerzaBruta(
+            hash,
+            alfabeto,
+            minLen,
+            maxLen
+        );
+
+
+    std::cout
+        << "=== Fuerza bruta pura ===\n";
+
+    std::cout
+        << "Alfabeto: "
+        << alfabeto.nombre
+        << " (|Sigma|="
+        << alfabeto.simbolos.size()
+        << ")\n";
+
+    std::cout
+        << "Longitudes exploradas: ["
+        << minLen
+        << ", "
+        << maxLen
+        << "]\n";
+
+    std::cout
+        << "Candidatos evaluados: "
+        << r.candidatosEvaluados
+        << "\n";
+
+    std::cout
+        << "Tiempo: "
+        << r.tiempoMs
+        << " ms\n";
+
+
+    if (r.encontrada) {
+        std::cout
+            << "Resultado: ENCONTRADA -> \""
+            << r.password
+            << "\" (longitud "
+            << r.longitudEncontrada
+            << ")\n";
+    } else {
+        std::cout
+            << "Resultado: no encontrada "
+            << "dentro del espacio explorado\n";
+    }
+
+
+    return 0;
+}
+
+
+static int cmdDict(
+    const std::vector<std::string>& args
+) {
+    const std::string hash =
+        obtenerArg(args, "--hash");
+
+    const std::string ruta =
+        obtenerArg(args, "--diccionario");
+
+
+    if (hash.empty() || ruta.empty()) {
+        std::cerr
+            << "Faltan argumentos obligatorios para 'dict'.\n";
+
+        imprimirUsoFB();
+        return 1;
+    }
+
+
+    fb::ResultadoDiccionario r =
+        fb::buscarPorDiccionario(
+            hash,
+            ruta
+        );
+
+
+    if (r.errorLectura) {
+        std::cerr
+            << "No se pudo abrir el diccionario: "
+            << ruta
+            << "\n";
+
+        return 1;
+    }
+
+
+    std::cout
+        << "=== Ataque por diccionario ===\n";
+
+    std::cout
+        << "Diccionario: "
+        << ruta
+        << "\n";
+
+    std::cout
+        << "Candidatos evaluados: "
+        << r.candidatosEvaluados
+        << "\n";
+
+    std::cout
+        << "Tiempo: "
+        << r.tiempoMs
+        << " ms\n";
+
+
+    if (r.encontrada) {
+        std::cout
+            << "Resultado: ENCONTRADA -> \""
+            << r.password
+            << "\"\n";
+    } else {
+        std::cout
+            << "Resultado: no encontrada "
+            << "en el diccionario\n";
+    }
+
+
+    return 0;
+}
+
+
+static int cmdSeed(
+    const std::vector<std::string>& args
+) {
+    const std::string apellidosStr =
+        obtenerArg(args, "--apellidos");
+
+
+    if (apellidosStr.empty()) {
+        std::cerr
+            << "Falta --apellidos "
+            << "(lista separada por comas).\n";
+
+        imprimirUsoFB();
+        return 1;
+    }
+
+
+    std::vector<std::string> apellidos =
+        separarPorComas(apellidosStr);
+
+    long long semilla =
+        fb::calcularSemilla(apellidos);
+
+
+    std::vector<std::string> apellidosNormalizados;
+
+    for (const std::string& apellido : apellidos) {
+        apellidosNormalizados.push_back(
+            fb::normalizarApellido(apellido)
+        );
+    }
+
+    std::sort(
+        apellidosNormalizados.begin(),
+        apellidosNormalizados.end()
+    );
+
+
+    std::cout
+        << "=== Semilla del equipo ===\n";
+
+    std::cout
+        << "Apellidos "
+        << "(orden alfabetico, normalizados): ";
+
+
+    for (
+        std::size_t i = 0;
+        i < apellidosNormalizados.size();
+        ++i
+    ) {
+        std::cout
+            << apellidosNormalizados[i];
+
+        if (
+            i + 1 <
+            apellidosNormalizados.size()
+        ) {
+            std::cout << " + ";
+        }
+    }
+
+
+    std::cout
+        << "\nSemilla = "
+        << semilla
+        << "\n\n";
+
+
+    std::vector<fb::InstanciaEquipo> instancias =
+        fb::generarInstanciasEquipo(semilla);
+
+
+    std::cout
+        << "id,alfabeto,longitud,password,hash_sha256\n";
+
+
+    for (
+        std::size_t i = 0;
+        i < instancias.size();
+        ++i
+    ) {
+        const fb::InstanciaEquipo& inst =
+            instancias[i];
+
+        std::cout
+            << (i + 1)
+            << ","
+            << inst.alfabetoNombre
+            << ","
+            << inst.longitud
+            << ","
+            << inst.password
+            << ","
+            << inst.hashHex
+            << "\n";
+    }
+
+
+    return 0;
+}
+
+
+struct FilaConfig {
+    std::string id;
+    std::string tipo;
+    std::string alfabetoNombre;
+    int longitud = 0;
+    std::string hashHex;
+};
+
+
+static std::vector<FilaConfig> leerConfigCsv(
+    const std::string& ruta
+) {
+    std::vector<FilaConfig> filas;
+
+    std::ifstream archivo(ruta);
+
+    if (!archivo) {
+        return filas;
+    }
+
+
+    std::string linea;
+    bool primera = true;
+
+
+    while (std::getline(archivo, linea)) {
+        if (
+            !linea.empty() &&
+            linea.back() == '\r'
+        ) {
+            linea.pop_back();
+        }
+
+
+        if (linea.empty()) {
+            continue;
+        }
+
+
+        if (primera) {
+            primera = false;
+            continue;
+        }
+
+
+        std::stringstream ss(linea);
+
+        std::string campo;
+
+        std::vector<std::string> campos;
+
+
+        while (std::getline(ss, campo, ',')) {
+            campos.push_back(campo);
+        }
+
+
+        if (campos.size() < 5) {
+            continue;
+        }
+
+
+        FilaConfig f;
+
+        f.id = campos[0];
+        f.tipo = campos[1];
+        f.alfabetoNombre = campos[2];
+        f.longitud = std::stoi(campos[3]);
+        f.hashHex = campos[4];
+
+        filas.push_back(f);
+    }
+
+
+    return filas;
+}
+
+
+static int cmdExperiment(
+    const std::vector<std::string>& args
+) {
+    const std::string rutaConfig =
+        obtenerArg(args, "--config");
+
+    const std::string rutaSalida =
+        obtenerArg(args, "--out");
+
+    const std::string rutaDiccionario =
+        obtenerArg(
+            args,
+            "--diccionario",
+            "resources/diccionario.txt"
+        );
+
+
+    if (
+        rutaConfig.empty() ||
+        rutaSalida.empty()
+    ) {
+        std::cerr
+            << "Faltan argumentos obligatorios "
+            << "para 'experiment'.\n";
+
+        imprimirUsoFB();
+        return 1;
+    }
+
+
+    std::vector<FilaConfig> filas =
+        leerConfigCsv(rutaConfig);
+
+
+    if (filas.empty()) {
+        std::cerr
+            << "No se pudieron leer instancias desde: "
+            << rutaConfig
+            << "\n";
+
+        return 1;
+    }
+
+
+    std::ofstream salida(rutaSalida);
+
+
+    if (!salida) {
+        std::cerr
+            << "No se pudo crear el archivo de salida: "
+            << rutaSalida
+            << "\n";
+
+        return 1;
+    }
+
+
+    salida
+        << "id,tipo,alfabeto,longitud,"
+        << "espacio_teorico,candidatos_fb,"
+        << "tiempo_fb_ms,encontrada_fb,"
+        << "candidatos_dict,tiempo_dict_ms,"
+        << "encontrada_dict\n";
+
+
+    for (const FilaConfig& f : filas) {
+        const fb::Alfabeto& alfabeto =
+            fb::alfabetoPorNombre(
+                f.alfabetoNombre
+            );
+
+
+        unsigned long long espacioTeorico = 1;
+
+
+        for (int i = 0; i < f.longitud; ++i) {
+            espacioTeorico *=
+                alfabeto.simbolos.size();
+        }
+
+
+        fb::ResultadoBusqueda rFb =
+            fb::buscarPorFuerzaBrutaLongitudFija(
+                f.hashHex,
+                alfabeto,
+                f.longitud
+            );
+
+
+        fb::ResultadoDiccionario rDict =
+            fb::buscarPorDiccionario(
+                f.hashHex,
+                rutaDiccionario
+            );
+
+
+        std::cout
+            << "["
+            << f.id
+            << "] fb: "
+            << rFb.tiempoMs
+            << " ms ("
+            << rFb.candidatosEvaluados
+            << " candidatos) | dict: "
+            << rDict.tiempoMs
+            << " ms\n";
+
+
+        const int fbOk =
+            rFb.encontrada ? 1 : 0;
+
+        const int dictOk =
+            rDict.encontrada ? 1 : 0;
+
+
+        salida
+            << f.id
+            << ","
+            << f.tipo
+            << ","
+            << alfabeto.nombre
+            << ","
+            << f.longitud
+            << ","
+            << espacioTeorico
+            << ","
+            << rFb.candidatosEvaluados
+            << ","
+            << rFb.tiempoMs
+            << ","
+            << fbOk
+            << ","
+            << rDict.candidatosEvaluados
+            << ","
+            << rDict.tiempoMs
+            << ","
+            << dictOk
+            << "\n";
+    }
+
+
+    std::cout
+        << "\nResultados escritos en "
+        << rutaSalida
+        << "\n";
+
+
+    return 0;
+}
+
+
+// =========================================================
+// BACKTRACKING
+// =========================================================
+
+static void mostrarMetricasBT(
     const std::string& titulo,
     const MetricasBT& metricas
 ) {
-    std::cout << "\n" << titulo << "\n";
+    std::cout
+        << "\n"
+        << titulo
+        << "\n";
 
     std::cout
         << "Nodos visitados: "
@@ -48,11 +604,6 @@ static void mostrarMetricas(
 }
 
 
-// =========================================================
-// TAMANO TEORICO DEL ARBOL EXHAUSTIVO
-// sumatoria desde k = 0 hasta n de |Sigma|^k
-// =========================================================
-
 static std::uint64_t nodosArbolExhaustivo(
     std::uint64_t tamAlfabeto,
     int n
@@ -60,35 +611,38 @@ static std::uint64_t nodosArbolExhaustivo(
     std::uint64_t total = 1;
     std::uint64_t potencia = 1;
 
+
     for (int k = 1; k <= n; ++k) {
         if (
             potencia >
-            std::numeric_limits<std::uint64_t>::max()
-            / tamAlfabeto
+            std::numeric_limits<
+                std::uint64_t
+            >::max() / tamAlfabeto
         ) {
             return 0;
         }
+
 
         potencia *= tamAlfabeto;
 
+
         if (
             total >
-            std::numeric_limits<std::uint64_t>::max()
-            - potencia
+            std::numeric_limits<
+                std::uint64_t
+            >::max() - potencia
         ) {
             return 0;
         }
+
 
         total += potencia;
     }
 
+
     return total;
 }
 
-
-// =========================================================
-// PORCENTAJE DE REDUCCION
-// =========================================================
 
 static double calcularReduccion(
     std::uint64_t nodosSinPoda,
@@ -98,23 +652,26 @@ static double calcularReduccion(
         return 0.0;
     }
 
+
     return (
         (
-            static_cast<double>(nodosSinPoda)
+            static_cast<double>(
+                nodosSinPoda
+            )
             -
-            static_cast<double>(nodosConPoda)
+            static_cast<double>(
+                nodosConPoda
+            )
         )
         /
-        static_cast<double>(nodosSinPoda)
+        static_cast<double>(
+            nodosSinPoda
+        )
     ) * 100.0;
 }
 
 
-// =========================================================
-// CARGAR CONFIGURACION
-// =========================================================
-
-static bool cargarConfiguracion(
+static bool cargarConfiguracionBT(
     const std::string& nombre,
     Politica& politica,
     std::string& alfabeto
@@ -238,11 +795,7 @@ static bool cargarConfiguracion(
 }
 
 
-// =========================================================
-// MOSTRAR DATOS DE LA INSTANCIA
-// =========================================================
-
-static std::uint64_t mostrarInstancia(
+static std::uint64_t mostrarInstanciaBT(
     const std::string& nombre,
     const Politica& politica,
     const std::string& alfabeto,
@@ -327,18 +880,14 @@ static std::uint64_t mostrarInstancia(
 }
 
 
-// =========================================================
-// EJECUCION NORMAL: SOLO BACKTRACKING CON PODA
-// =========================================================
-
-static int ejecutarInstancia(
+static int ejecutarInstanciaBT(
     const std::string& nombre,
     const Politica& politica,
     const std::string& alfabeto,
     const LimitesBT& limites
 ) {
     std::uint64_t nodosTeoricos =
-        mostrarInstancia(
+        mostrarInstanciaBT(
             nombre,
             politica,
             alfabeto,
@@ -354,7 +903,7 @@ static int ejecutarInstancia(
         );
 
 
-    mostrarMetricas(
+    mostrarMetricasBT(
         "=== CON PODA ===",
         conPoda
     );
@@ -370,6 +919,7 @@ static int ejecutarInstancia(
                 conPoda.nodosVisitados
             );
 
+
         std::cout
             << "\nReduccion teorica del espacio: "
             << reduccion
@@ -378,6 +928,7 @@ static int ejecutarInstancia(
         std::cout
             << "\nReduccion final del espacio: "
             << "NO CALCULADA\n";
+
 
         if (conPoda.interrumpido) {
             std::cout
@@ -391,17 +942,13 @@ static int ejecutarInstancia(
 }
 
 
-// =========================================================
-// COMPARACION CON PODA VS SIN PODA
-// =========================================================
-
-static int ejecutarComparacion(
+static int ejecutarComparacionBT(
     const std::string& nombre,
     const Politica& politica,
     const std::string& alfabeto,
     const LimitesBT& limites
 ) {
-    mostrarInstancia(
+    mostrarInstanciaBT(
         "COMPARACION: " + nombre,
         politica,
         alfabeto,
@@ -421,7 +968,7 @@ static int ejecutarComparacion(
         );
 
 
-    mostrarMetricas(
+    mostrarMetricasBT(
         "=== CON PODA ===",
         conPoda
     );
@@ -439,15 +986,11 @@ static int ejecutarComparacion(
         );
 
 
-    mostrarMetricas(
+    mostrarMetricasBT(
         "=== SIN PODA ===",
         sinPoda
     );
 
-
-    // -----------------------------------------------------
-    // COMPARACION COMPLETA
-    // -----------------------------------------------------
 
     if (
         !conPoda.interrumpido &&
@@ -455,6 +998,7 @@ static int ejecutarComparacion(
     ) {
         std::cout
             << "\n=== RESULTADO DE LA COMPARACION ===\n";
+
 
         if (
             conPoda.soluciones ==
@@ -500,6 +1044,7 @@ static int ejecutarComparacion(
                 /
                 conPoda.tiempoMs;
 
+
             std::cout
                 << "Relacion de tiempo sin/con poda: "
                 << relacionTiempo
@@ -513,10 +1058,6 @@ static int ejecutarComparacion(
         return 0;
     }
 
-
-    // -----------------------------------------------------
-    // COMPARACION PARCIAL
-    // -----------------------------------------------------
 
     std::cout
         << "\n=== RESULTADO DE LA COMPARACION ===\n";
@@ -541,15 +1082,9 @@ static int ejecutarComparacion(
 }
 
 
-// =========================================================
-// AYUDA
-// =========================================================
-
-static void mostrarAyuda() {
+static void mostrarUsoBT() {
     std::cout
-        << "Uso:\n\n"
-
-        << "Ejecucion con poda:\n"
+        << "Backtracking:\n"
         << "  ./ada_p1 prueba\n"
         << "  ./ada_p1 referencia [max_nodos]\n"
         << "  ./ada_p1 equipo_n6 [max_nodos]\n"
@@ -558,7 +1093,7 @@ static void mostrarAyuda() {
         << "  ./ada_p1 relajada_n8 [max_nodos]\n"
         << "  ./ada_p1 sin_restricciones_n6 [max_nodos]\n\n"
 
-        << "Comparacion con poda vs sin poda:\n"
+        << "Comparacion Backtracking:\n"
         << "  ./ada_p1 comparar prueba\n"
         << "  ./ada_p1 comparar referencia max_nodos\n"
         << "  ./ada_p1 comparar equipo_n6 max_nodos\n"
@@ -569,48 +1104,110 @@ static void mostrarAyuda() {
 }
 
 
+static void mostrarUsoGeneral() {
+    std::cout
+        << "====================================\n"
+        << "Practica 1 - Fuerza Bruta y Backtracking\n"
+        << "====================================\n\n";
+
+    imprimirUsoFB();
+
+    std::cout << "\n";
+
+    mostrarUsoBT();
+}
+
+
 // =========================================================
-// MAIN
+// MAIN INTEGRADO
 // =========================================================
 
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
     std::cout
         << std::fixed
         << std::setprecision(3);
 
 
     if (argc < 2) {
-        mostrarAyuda();
+        mostrarUsoGeneral();
         return 0;
     }
 
 
+    const std::string comando = argv[1];
+
+
     // =====================================================
-    // MODO COMPARACION
+    // FUERZA BRUTA
     // =====================================================
 
-    if (std::string(argv[1]) == "comparar") {
+    if (
+        comando == "brute" ||
+        comando == "dict" ||
+        comando == "seed" ||
+        comando == "experiment"
+    ) {
+        std::vector<std::string> args(
+            argv + 2,
+            argv + argc
+        );
+
+
+        try {
+            if (comando == "brute") {
+                return cmdBrute(args);
+            }
+
+            if (comando == "dict") {
+                return cmdDict(args);
+            }
+
+            if (comando == "seed") {
+                return cmdSeed(args);
+            }
+
+            if (comando == "experiment") {
+                return cmdExperiment(args);
+            }
+        } catch (const std::exception& e) {
+            std::cerr
+                << "Error: "
+                << e.what()
+                << "\n";
+
+            return 1;
+        }
+    }
+
+
+    // =====================================================
+    // BACKTRACKING - COMPARACION
+    // =====================================================
+
+    if (comando == "comparar") {
         if (argc < 3 || argc > 4) {
-            mostrarAyuda();
+            mostrarUsoBT();
             return 1;
         }
 
 
-        std::string nombre = argv[2];
+        const std::string nombre =
+            argv[2];
 
         Politica politica;
         std::string alfabeto;
 
 
         if (
-            !cargarConfiguracion(
+            !cargarConfiguracionBT(
                 nombre,
                 politica,
                 alfabeto
             )
         ) {
             std::cerr
-                << "Configuracion no valida.\n";
+                << "Configuracion de Backtracking "
+                << "no valida.\n";
 
             return 1;
         }
@@ -625,36 +1222,33 @@ int main(int argc, char* argv[]) {
                     std::stoull(argv[3]);
             } catch (...) {
                 std::cerr
-                    << "El limite de nodos no es valido.\n";
+                    << "El limite de nodos "
+                    << "no es valido.\n";
 
                 return 1;
             }
         }
 
 
-        // La prueba pequena puede ejecutarse completa.
         if (nombre == "prueba") {
             limites.maxNodos = 0;
-        } else {
-            // Para cualquier instancia real exigimos limite
-            // al ejecutar la version sin poda.
-            if (limites.maxNodos == 0) {
-                std::cerr
-                    << "SEGURIDAD: para comparar una instancia "
-                    << "real debes indicar max_nodos.\n";
+        } else if (limites.maxNodos == 0) {
+            std::cerr
+                << "SEGURIDAD: para comparar una "
+                << "instancia real debes indicar "
+                << "max_nodos.\n";
 
-                std::cerr
-                    << "Ejemplo:\n"
-                    << "./ada_p1 comparar "
-                    << nombre
-                    << " 1000000\n";
+            std::cerr
+                << "Ejemplo:\n"
+                << "./ada_p1 comparar "
+                << nombre
+                << " 1000000\n";
 
-                return 1;
-            }
+            return 1;
         }
 
 
-        return ejecutarComparacion(
+        return ejecutarComparacionBT(
             nombre,
             politica,
             alfabeto,
@@ -664,55 +1258,62 @@ int main(int argc, char* argv[]) {
 
 
     // =====================================================
-    // MODO NORMAL
+    // BACKTRACKING - EJECUCION NORMAL
     // =====================================================
-
-    if (argc > 3) {
-        mostrarAyuda();
-        return 1;
-    }
-
-
-    std::string nombre = argv[1];
 
     Politica politica;
     std::string alfabeto;
 
 
     if (
-        !cargarConfiguracion(
-            nombre,
+        cargarConfiguracionBT(
+            comando,
             politica,
             alfabeto
         )
     ) {
-        std::cerr
-            << "Configuracion no valida.\n";
-
-        return 1;
-    }
-
-
-    LimitesBT limites;
-
-
-    if (argc == 3) {
-        try {
-            limites.maxNodos =
-                std::stoull(argv[2]);
-        } catch (...) {
-            std::cerr
-                << "El limite de nodos no es valido.\n";
-
+        if (argc > 3) {
+            mostrarUsoBT();
             return 1;
         }
+
+
+        LimitesBT limites;
+
+
+        if (argc == 3) {
+            try {
+                limites.maxNodos =
+                    std::stoull(argv[2]);
+            } catch (...) {
+                std::cerr
+                    << "El limite de nodos "
+                    << "no es valido.\n";
+
+                return 1;
+            }
+        }
+
+
+        return ejecutarInstanciaBT(
+            comando,
+            politica,
+            alfabeto,
+            limites
+        );
     }
 
 
-    return ejecutarInstancia(
-        nombre,
-        politica,
-        alfabeto,
-        limites
-    );
+    // =====================================================
+    // COMANDO DESCONOCIDO
+    // =====================================================
+
+    std::cerr
+        << "Comando desconocido: "
+        << comando
+        << "\n\n";
+
+    mostrarUsoGeneral();
+
+    return 1;
 }

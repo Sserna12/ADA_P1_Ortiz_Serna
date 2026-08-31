@@ -14,9 +14,9 @@ Este proyecto implementa y analiza dos estrategias algorítmicas:
 - Fuerza Bruta
 - Backtracking con poda
 
-El objetivo es comparar experimentalmente el crecimiento del espacio de búsqueda, medir tiempos de ejecución y analizar el efecto de las podas sobre la cantidad de estados explorados.
+El objetivo es estudiar experimentalmente el crecimiento del espacio de búsqueda, medir tiempos de ejecución, comparar resultados empíricos con el comportamiento teórico y analizar el efecto de las podas sobre la cantidad de estados explorados.
 
-El proyecto utiliza C++17.
+El proyecto está desarrollado en C++17.
 
 ---
 
@@ -29,31 +29,38 @@ ADA_P1_Ortiz_Serna/
 │   ├── main.cpp
 │   ├── bt_backtracking.cpp
 │   ├── bt_backtracking.hpp
-│   └── archivos del módulo de Fuerza Bruta
+│   ├── fb_core.cpp
+│   ├── fb_core.hpp
+│   ├── fb_dictionary.cpp
+│   ├── fb_dictionary.hpp
+│   ├── fb_instancias.cpp
+│   ├── fb_instancias.hpp
+│   └── third_party/
+│       ├── picosha2.h
+│       └── LICENSE_picosha2.txt
 │
 ├── tests/
-│   └── test_backtracking.cpp
+│   ├── test_backtracking.cpp
+│   └── test_fb.cpp
 │
 ├── resources/
-│   └── instancia_equipo.txt
+│   ├── instancia_equipo.txt
+│   ├── diccionario.txt
+│   └── fb_instancias.csv
 │
 ├── results/
-│   ├── bt_equipo_n6.txt
-│   ├── bt_equipo_n8_calibracion.txt
-│   ├── bt_equipo_n10_calibracion.txt
-│   ├── bt_relajada_n8_calibracion.txt
-│   ├── bt_sin_restricciones_n6_calibracion.txt
-│   ├── bt_referencia_calibracion.txt
-│   ├── bt_comparacion_equipo_n6.txt
-│   ├── bt_resumen.txt
-│   ├── bt_resultados_grafica.csv
-│   ├── bt_tiempo_vs_n.png
-│   └── bt_tiempo_vs_nodos.png
+│   ├── resultados de Backtracking
+│   ├── fb_tiempos.csv
+│   ├── fb_tiempo_vs_n.png
+│   └── fb_tiempo_vs_candidatos.png
 │
 ├── scripts/
 │   └── graficas_bt.py
 │
 ├── report/
-│   └── aporte_backtracking.md
+│   ├── aporte_backtracking.md
+│   ├── contribucion_samuel.md
+│   ├── sustentacion_backtracking.md
+│   └── Informe_base.md
 │
 └── README.md

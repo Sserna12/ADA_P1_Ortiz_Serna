@@ -1,5 +1,6 @@
 # Ejecutables
 ada_p1
+tests/test_fb
 *.out
 *.exe
 
